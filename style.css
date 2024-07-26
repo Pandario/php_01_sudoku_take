@@ -1,0 +1,17 @@
+table {
+    margin: auto;
+}
+
+td {
+    padding: 32px;
+    text-align: center;
+    font-size: 24px;
+}
+
+.block-1, .block-3, .block-5, .block-7, .block-9 {
+    background-color: wheat;
+}
+
+.block-2, .block-4, .block-6, .block-8 {
+    background-color: gainsboro;
+}

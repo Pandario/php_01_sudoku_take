@@ -1,5 +1,7 @@
 <?php
 
+require 'filter.php';
+
 
 $servername = "localhost";
 $username = "root";
@@ -16,18 +18,24 @@ if ($conn->connect_error) {
 
 $sudokuIds = [];
 $sudokuGrid = null;
+$filter = 'full';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sudoku_id'])) {
-    $selectedId = intval($_POST['sudoku_id']);
-    $stmt = $conn->prepare("SELECT data FROM sudoku WHERE id = ?");
-    $stmt->bind_param("i", $selectedId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $sudokuGrid = json_decode($row['data'], true);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['sudoku_id'])) {
+        $selectedId = intval($_POST['sudoku_id']);
+        $stmt = $conn->prepare("SELECT data FROM sudoku WHERE id = ?");
+        $stmt->bind_param("i", $selectedId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $sudokuGrid = json_decode($row['data'], true);
+        }
+        $stmt->close();
     }
-    $stmt->close();
+    if (isset($_POST['filter'])) {
+        $filter = $_POST['filter'];
+    }
 }
 
 
@@ -37,6 +45,10 @@ while ($row = $result->fetch_assoc()) {
 }
 
 $conn->close();
+
+if ($sudokuGrid) {
+    $sudokuGrid = filterSudoku($sudokuGrid, $filter);
+}
 ?>
 
 <!DOCTYPE html>
@@ -53,7 +65,14 @@ $conn->close();
         <label for="sudoku_id">Select ID:</label>
         <select name="sudoku_id" id="sudoku_id">
             <?php foreach ($sudokuIds as $id): ?>
-                <option value="<?php echo $id; ?>"><?php echo $id; ?></option>
+                <option value="<?php echo $id; ?>" <?php if (isset($selectedId) && $selectedId == $id) echo 'selected'; ?>><?php echo $id; ?></option>
+            <?php endforeach; ?>
+        </select>
+        <label for="filter">Filter:</label>
+        <select name="filter" id="filter">
+            <option value="full" <?php if ($filter === 'full') echo 'selected'; ?>>Full</option>
+            <?php foreach (range('A', 'I') as $letter): ?>
+                <option value="<?php echo $letter; ?>" <?php if ($filter === $letter) echo 'selected'; ?>><?php echo $letter; ?></option>
             <?php endforeach; ?>
         </select>
         <button class="btn" type="submit">Get</button>
